@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Verification</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div id="content">
+        <h2>Verifying your email...</h2>
+        <p>Please wait while we verify your email address.</p>
+    </div>
+
+    <script>
+        // Extract parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        const secret = urlParams.get('secret');
+
+        if (userId && secret) {
+            // Call your Appwrite API directly from the webpage
+            fetch('https://nyc.cloud.appwrite.io/v1/account/verification', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': '688f51fe000806201e84'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    secret: secret
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('content').innerHTML = `
+                    <h2>✅ Email Verified!</h2>
+                    <p>Your email has been successfully verified.</p>
+                    <p><a href="yourapp://home">Open App</a> or continue using the web.</p>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('content').innerHTML = `
+                    <h2>❌ Verification Failed</h2>
+                    <p>There was an error verifying your email. Please try again.</p>
+                `;
+            });
+        } else {
+            document.getElementById('content').innerHTML = `
+                <h2>❌ Invalid Link</h2>
+                <p>This verification link is invalid or expired.</p>
+            `;
+        }
+    </script>
+</body>
+</html>
