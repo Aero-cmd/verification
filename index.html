@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - Aero</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+        }
+        
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .loading-color { color: #3b82f6; }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        p {
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+            margin: 8px;
+        }
+        
+        .button:hover {
+            background: #2563eb;
+        }
+        
+        .button.secondary {
+            background: #6b7280;
+        }
+        
+        .button.secondary:hover {
+            background: #4b5563;
+        }
+        
+        .support {
+            margin-top: 32px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        
+        .support a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loading-state">
+            <div class="icon loading loading-color">
+                <svg fill="none" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
+                    <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h1>Verifying Your Email</h1>
+            <p>Please wait while we verify your email address...</p>
+        </div>
+
+        <!-- Success State -->
+        <div id="success-state" class="hidden">
+            <div class="icon success">
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h1 class="success">Email Verified Successfully!</h1>
+            <p>Your email has been successfully verified!</p>
+            <a href="yourapp://home" class="button">Open Aero App</a>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="hidden">
+            <div class="icon error">
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+                </svg>
+            </div>
+            <h1 class="error">Verification Failed</h1>
+            <p id="error-message">There was an error verifying your email. Please try again.</p>
+            <a href="javascript:location.reload()" class="button secondary">Try Again</a>
+            <a href="yourapp://home" class="button">Open App</a>
+        </div>
+
+        <div class="support">
+            Having trouble? <a href="mailto:support@yourapp.com">Contact support</a>
+        </div>
+    </div>
+
+    <script>
+        function showState(state) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('success-state').classList.add('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+            document.getElementById(state + '-state').classList.remove('hidden');
+        }
+
+        async function verifyEmail() {
+            try {
+                // Extract parameters from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('userId');
+                const secret = urlParams.get('secret');
+
+                if (!userId || !secret) {
+                    document.getElementById('error-message').textContent = 'Invalid verification link. Missing required parameters.';
+                    showState('error');
+                    return;
+                }
+
+                // Call Appwrite API to verify email
+                const response = await fetch('https://nyc.cloud.appwrite.io/v1/account/verification', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Appwrite-Project': '688f51fe000806201e84'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        secret: secret
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showState('success');
+                } else {
+                    document.getElementById('error-message').textContent = data.message || 'Verification failed. The link may be expired or invalid.';
+                    showState('error');
+                }
+            } catch (error) {
+                document.getElementById('error-message').textContent = 'Network error occurred. Please check your connection and try again.';
+                showState('error');
+            }
+        }
+
+        // Start verification when page loads
+        window.addEventListener('load', verifyEmail);
+    </script>
+</body>
+</html>
